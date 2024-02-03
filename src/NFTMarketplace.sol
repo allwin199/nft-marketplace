@@ -92,7 +92,7 @@ contract NFTMarketplace is ERC721URIStorage {
     }
 
     function getAllNFTs() external view returns (ListedToken[] memory) {
-        ListedToken[] memory allNfts = new ListedToken[](s_tokenId - 1);
+        ListedToken[] memory allNfts = new ListedToken[](s_tokenId);
 
         for (uint256 i = 0; i < s_tokenId; i++) {
             allNfts[i] = s_tokenIdToListedToken[i];
