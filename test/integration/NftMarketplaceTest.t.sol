@@ -288,4 +288,19 @@ contract NftMarketplaceTest is Test {
         uint256 itemsSold = nftMarketplace.getItemsSold();
         assertEq(itemsSold, 0);
     }
+
+    //////////////////////////////////////////////////////////
+    //////////////////  Multiple Token Tests  ////////////////
+    //////////////////////////////////////////////////////////
+    function test_CreateMultipleTokens() public {
+        vm.startPrank(seller1);
+        nftMarketplace.createToken{value: LISTING_PRICE}(TOKEN_URI_1, NFT_PRICE);
+        nftMarketplace.createToken{value: LISTING_PRICE}(TOKEN_URI_2, 0.02 ether);
+        vm.stopPrank();
+
+        NFTMarketplace.MarketItem[] memory marketItems = nftMarketplace.getAllNFTs();
+        assertEq(marketItems.length, 2);
+
+        assertEq(marketItems[1].price, 0.02 ether);
+    }
 }
