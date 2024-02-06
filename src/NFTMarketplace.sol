@@ -38,8 +38,10 @@ contract NFTMarketplace is ERC721URIStorage {
     //////////////////////////////////////////////////////////
     error NFTMarketplace__OnlyOwnerCan_UpdateListPrice();
     error NFTMarketplace__Incorrect_ListingPrice();
+    error NFTMarketplace__Incorrect_BuyingPrice();
     error NFTMarketplace__PriceCannot_BeZero();
     error NFTMarketplace__TransferFailed();
+    error NFTMarketplace__OnlyOwnerCan_ReSell();
 
     //////////////////////////////////////////////////////////
     ////////////////  Type Declarations  /////////////////////
@@ -105,6 +107,62 @@ contract NFTMarketplace is ERC721URIStorage {
         return s_tokenId - 1;
     }
 
+    function executeSale(uint256 tokenId) external payable {
+        uint256 price = s_idToMarketItem[tokenId].price;
+        address seller = s_idToMarketItem[tokenId].seller;
+        if (msg.value != price) {
+            revert NFTMarketplace__Incorrect_BuyingPrice();
+        }
+
+        s_idToMarketItem[tokenId].seller = payable(address(0));
+        s_idToMarketItem[tokenId].sold = true;
+        s_idToMarketItem[tokenId].owner = payable(msg.sender);
+
+        s_itemsSold = s_itemsSold + 1;
+
+        // msg.sender will own this nft from now on
+        _transfer(address(this), msg.sender, tokenId);
+
+        (bool sendListingFee,) = payable(i_owner).call{value: s_listingPrice}("");
+
+        // sending commison to the owner of the market place
+        if (!sendListingFee) {
+            revert NFTMarketplace__TransferFailed();
+        }
+
+        // sending nft amount to the sender
+        (bool sendAmountToSeller,) = payable(seller).call{value: price}("");
+
+        if (!sendAmountToSeller) {
+            revert NFTMarketplace__TransferFailed();
+        }
+    }
+
+    function reSellNft(uint256 tokenId, uint256 price) external payable {
+        address owner = s_idToMarketItem[tokenId].owner;
+        if (owner != msg.sender) {
+            revert NFTMarketplace__OnlyOwnerCan_ReSell();
+        }
+
+        if (msg.value != s_listingPrice) {
+            revert NFTMarketplace__Incorrect_ListingPrice();
+        }
+
+        if (price < 0) {
+            revert NFTMarketplace__PriceCannot_BeZero();
+        }
+
+        s_idToMarketItem[tokenId].sold = false;
+        s_idToMarketItem[tokenId].price = price;
+        s_idToMarketItem[tokenId].seller = payable(msg.sender);
+        s_idToMarketItem[tokenId].owner = payable(address(this));
+
+        // give nft marketplace allowance to perform actions
+        _transfer(msg.sender, address(this), tokenId);
+
+        s_itemsSold = s_itemsSold - 1;
+    }
+
     function updateListPrice(uint256 newPrice) external {
         if (msg.sender != i_owner) {
             revert NFTMarketplace__OnlyOwnerCan_UpdateListPrice();
@@ -152,77 +210,13 @@ contract NFTMarketplace is ERC721URIStorage {
         return s_tokenId;
     }
 
-    // function createToken(string memory tokenURI, uint256 price) public payable returns (uint256) {
-    //     if (msg.value != s_listingPrice) {
-    //         revert NFTMarketplace__IncorrectPrice();
-    //     }
+    function getAllNFTs() external view returns (MarketItem[] memory) {
+        MarketItem[] memory allNfts = new MarketItem[](s_tokenId);
 
-    //     if (price == 0) {
-    //         revert NFTMarketplace__PriceCannot_BeZero();
-    //     }
+        for (uint256 i = 0; i < s_tokenId; i++) {
+            allNfts[i] = s_idToMarketItem[i];
+        }
 
-    //     _safeMint(msg.sender, s_tokenId);
-    //     _setTokenURI(s_tokenId, tokenURI);
-
-    //     createListedToken(s_tokenId, price);
-
-    //     s_tokenId = s_tokenId + 1;
-
-    //     return s_tokenId - 1;
-    // }
-
-    // function createListedToken(uint256 _tokenId, uint256 _price) private {
-    //     s_tokenIdToListedToken[_tokenId] = ListedToken({
-    //         tokenId: _tokenId,
-    //         owner: payable(address(this)),
-    //         seller: payable(msg.sender),
-    //         price: _price,
-    //         currentlyListed: true
-    //     });
-
-    //     _transfer(msg.sender, address(this), _tokenId);
-
-    //     emit TokenListedSuccess(_tokenId, address(this), msg.sender, _price, true);
-    // }
-
-    // function getAllNFTs() external view returns (ListedToken[] memory) {
-    //     ListedToken[] memory allNfts = new ListedToken[](s_tokenId);
-
-    //     for (uint256 i = 0; i < s_tokenId; i++) {
-    //         allNfts[i] = s_tokenIdToListedToken[i];
-    //     }
-
-    //     return allNfts;
-    // }
-
-    // function executeSale(uint256 tokenId) external payable {
-    //     uint256 price = s_tokenIdToListedToken[tokenId].price;
-
-    //     if (msg.value != price) {
-    //         revert NFTMarketplace__IncorrectPrice();
-    //     }
-
-    //     address seller = s_tokenIdToListedToken[tokenId].seller;
-
-    //     s_tokenIdToListedToken[tokenId].seller = payable(msg.sender);
-
-    //     _transfer(address(this), msg.sender, tokenId);
-
-    //     // If the new owner plans to sell the nft later, new owner has to approve
-    //     approve(address(this), tokenId);
-
-    //     s_itemsSold = s_itemsSold + 1;
-
-    //     (bool sendListingFee,) = payable(i_owner).call{value: s_listingPrice}("");
-
-    //     if (!sendListingFee) {
-    //         revert NFTMarketplace__TransferFailed();
-    //     }
-
-    //     (bool sendAmountToSeller,) = payable(seller).call{value: price}("");
-
-    //     if (!sendAmountToSeller) {
-    //         revert NFTMarketplace__TransferFailed();
-    //     }
-    // }
+        return allNfts;
+    }
 }
