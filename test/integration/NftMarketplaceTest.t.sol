@@ -36,9 +36,35 @@ contract NftMarketplaceTest is Test {
         vm.deal(seller2, STARTING_BALANCE);
     }
 
+    //////////////////////////////////////////////////////////
+    ////////////////  Listing Price Tests  ///////////////////
+    //////////////////////////////////////////////////////////
+
     function test_ListingPrice() public {
         uint256 listingPrice = nftMarketplace.getListingPrice();
         assertEq(listingPrice, LISTING_PRICE);
+    }
+
+    function test_RevertsIf_UpdateListing_NotCalledByOwner() public {
+        vm.expectRevert(NFTMarketplace.NFTMarketplace__OnlyOwnerCan_UpdateListingPrice.selector);
+        nftMarketplace.updateListingPrice(0);
+    }
+
+    function test_RevertsIf_UpdateListingPrice_IsZero() public {
+        vm.startPrank(msg.sender);
+        vm.expectRevert(NFTMarketplace.NFTMarketplace__PriceCannot_BeZero.selector);
+        nftMarketplace.updateListingPrice(0);
+        vm.stopPrank();
+    }
+
+    function test_UpdateListingPrice() public {
+        vm.startPrank(msg.sender);
+        uint256 newPrice = 0.02 ether;
+        nftMarketplace.updateListingPrice(newPrice);
+        vm.stopPrank();
+
+        uint256 listingPrice = nftMarketplace.getListingPrice();
+        assertEq(listingPrice, newPrice);
     }
 
     //////////////////////////////////////////////////////////

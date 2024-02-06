@@ -36,7 +36,7 @@ contract NFTMarketplace is ERC721URIStorage {
     //////////////////////////////////////////////////////////
     ////////////////////  Custom Errors  /////////////////////
     //////////////////////////////////////////////////////////
-    error NFTMarketplace__OnlyOwnerCan_UpdateListPrice();
+    error NFTMarketplace__OnlyOwnerCan_UpdateListingPrice();
     error NFTMarketplace__Incorrect_ListingPrice();
     error NFTMarketplace__Incorrect_BuyingPrice();
     error NFTMarketplace__PriceCannot_BeZero();
@@ -164,9 +164,12 @@ contract NFTMarketplace is ERC721URIStorage {
         s_itemsSold = s_itemsSold - 1;
     }
 
-    function updateListPrice(uint256 newPrice) external {
+    function updateListingPrice(uint256 newPrice) external {
         if (msg.sender != i_owner) {
-            revert NFTMarketplace__OnlyOwnerCan_UpdateListPrice();
+            revert NFTMarketplace__OnlyOwnerCan_UpdateListingPrice();
+        }
+        if (newPrice == 0) {
+            revert NFTMarketplace__PriceCannot_BeZero();
         }
         s_listingPrice = newPrice;
     }
