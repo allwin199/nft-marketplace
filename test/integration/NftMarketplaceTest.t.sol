@@ -117,4 +117,120 @@ contract NftMarketplaceTest is Test {
         nftMarketplace.createToken{value: LISTING_PRICE}(TOKEN_URI_1, NFT_PRICE);
         vm.stopPrank();
     }
+
+    function test_CreateToken_UpdatesTotalNfts() public TokenCreated {
+        NFTMarketplace.MarketItem[] memory marketItem = nftMarketplace.getAllNFTs();
+        assertEq(marketItem[0].seller, seller1);
+    }
+
+    //////////////////////////////////////////////////////////
+    /////////////////  Execute Sale Tests  ///////////////////
+    //////////////////////////////////////////////////////////
+
+    modifier TokenCreated() {
+        vm.startPrank(seller1);
+        nftMarketplace.createToken{value: LISTING_PRICE}(TOKEN_URI_1, NFT_PRICE);
+        vm.stopPrank();
+        _;
+    }
+
+    function test_RevertsIf_executeSaleWith_IncorrectBuyingPrice() public TokenCreated {
+        vm.startPrank(seller2);
+        vm.expectRevert(NFTMarketplace.NFTMarketplace__Incorrect_BuyingPrice.selector);
+        nftMarketplace.executeSale(0);
+        vm.stopPrank();
+    }
+
+    function test_executeSale() public TokenCreated {
+        vm.startPrank(seller2);
+
+        NFTMarketplace.MarketItem memory marketItem = nftMarketplace.getItemForTokenId(0);
+        uint256 price = marketItem.price;
+
+        nftMarketplace.executeSale{value: price}(0);
+
+        vm.stopPrank();
+    }
+
+    modifier TokenCreateAnd_SaleExecuted() {
+        vm.startPrank(seller1);
+        nftMarketplace.createToken{value: LISTING_PRICE}(TOKEN_URI_1, NFT_PRICE);
+        vm.stopPrank();
+
+        vm.startPrank(seller2);
+
+        NFTMarketplace.MarketItem memory marketItem = nftMarketplace.getItemForTokenId(0);
+        uint256 price = marketItem.price;
+
+        nftMarketplace.executeSale{value: price}(0);
+
+        vm.stopPrank();
+        _;
+    }
+
+    function test_executeSale_UpdatesSeller() public TokenCreateAnd_SaleExecuted {
+        NFTMarketplace.MarketItem memory marketItem = nftMarketplace.getItemForTokenId(0);
+        assertEq(marketItem.seller, seller2);
+    }
+
+    function test_executeSale_UpdatesItemsSold() public TokenCreateAnd_SaleExecuted {
+        uint256 itemsSold = nftMarketplace.getItemsSold();
+        assertEq(itemsSold, 1);
+    }
+
+    function test_executeSale_UpdatesPreviousSellerBalance() public TokenCreated {
+        uint256 seller1PrevBalance = address(seller1).balance;
+        vm.startPrank(seller2);
+
+        NFTMarketplace.MarketItem memory marketItem = nftMarketplace.getItemForTokenId(0);
+        uint256 price = marketItem.price;
+
+        nftMarketplace.executeSale{value: price}(0);
+
+        vm.stopPrank();
+
+        uint256 seller1CurrentBalance = address(seller1).balance;
+
+        assertEq(seller1CurrentBalance, seller1PrevBalance + marketItem.price);
+    }
+
+    //////////////////////////////////////////////////////////
+    //////////////////////  Re-Sell Tests  ///////////////////
+    //////////////////////////////////////////////////////////
+
+    function test_RevertsIf_reSellNft_NotCalledByOwner() public TokenCreateAnd_SaleExecuted {
+        vm.startPrank(seller1);
+        vm.expectRevert(NFTMarketplace.NFTMarketplace__OnlyOwnerCan_ReSell.selector);
+        nftMarketplace.reSellNft(0, 0.03 ether);
+        vm.stopPrank();
+    }
+
+    function test_RevertsIf_reSellNft_IncorrectListingPrice() public TokenCreateAnd_SaleExecuted {
+        vm.startPrank(seller2);
+        vm.expectRevert(NFTMarketplace.NFTMarketplace__Incorrect_ListingPrice.selector);
+        nftMarketplace.reSellNft{value: 0}(0, 0.03 ether);
+        vm.stopPrank();
+    }
+
+    function test_RevertsIf_reSellNft_PriceIsZero() public TokenCreateAnd_SaleExecuted {
+        vm.startPrank(seller2);
+        vm.expectRevert(NFTMarketplace.NFTMarketplace__PriceCannot_BeZero.selector);
+        nftMarketplace.reSellNft{value: LISTING_PRICE}(0, 0);
+        vm.stopPrank();
+    }
+
+    function test_RevertsIf_reSellNft() public TokenCreateAnd_SaleExecuted {
+        vm.startPrank(seller2);
+        nftMarketplace.reSellNft{value: LISTING_PRICE}(0, 0.03 ether);
+        vm.stopPrank();
+    }
+
+    function test_RevertsIf_reSellNft_UpdatesItemsSold() public TokenCreateAnd_SaleExecuted {
+        vm.startPrank(seller2);
+        nftMarketplace.reSellNft{value: LISTING_PRICE}(0, 0.03 ether);
+        vm.stopPrank();
+
+        uint256 itemsSold = nftMarketplace.getItemsSold();
+        assertEq(itemsSold, 0);
+    }
 }

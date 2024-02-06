@@ -150,7 +150,7 @@ contract NFTMarketplace is ERC721URIStorage {
             revert NFTMarketplace__Incorrect_ListingPrice();
         }
 
-        if (price < 0) {
+        if (price == 0) {
             revert NFTMarketplace__PriceCannot_BeZero();
         }
 
@@ -202,10 +202,6 @@ contract NFTMarketplace is ERC721URIStorage {
         return s_listingPrice;
     }
 
-    function getLatestListedItem() external view returns (MarketItem memory) {
-        return s_idToMarketItem[s_tokenId - 1];
-    }
-
     function getItemForTokenId(uint256 tokenId) external view returns (MarketItem memory) {
         return s_idToMarketItem[tokenId];
     }
@@ -222,5 +218,9 @@ contract NFTMarketplace is ERC721URIStorage {
         }
 
         return allNfts;
+    }
+
+    function getItemsSold() external view returns (uint256) {
+        return s_itemsSold;
     }
 }
