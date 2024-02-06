@@ -1,66 +1,34 @@
-## Foundry
+# NFT Marketplace
 
-**Foundry is a blazing fast, portable and modular toolkit for Ethereum application development written in Rust.**
+## About
 
-Foundry consists of:
+Ethereum-based NFT marketplace where users can securely sell their digital assets, while others can purchase them without intermediaries. The platform operates autonomously, leveraging blockchain technology for transparent transactions and ensuring decentralized control over the entire process.
 
--   **Forge**: Ethereum testing framework (like Truffle, Hardhat and DappTools).
--   **Cast**: Swiss army knife for interacting with EVM smart contracts, sending transactions and getting chain data.
--   **Anvil**: Local Ethereum node, akin to Ganache, Hardhat Network.
--   **Chisel**: Fast, utilitarian, and verbose solidity REPL.
+## Demo
 
-## Documentation
+[NFT Marketplace Nextjs App](https://nft-marketplace-frontendv1.vercel.app/)  
+[Github](https://github.com/allwin199/nft-marketplace-frontend)
 
-https://book.getfoundry.sh/
+### Marketplace
 
-## Usage
+![Marketplace](./workflow-images/Home.png)
 
-### Build
+---
 
-```shell
-$ forge build
-```
+### List NFT
 
-### Test
+![Marketplace](./workflow-images/listNft.png)
 
-```shell
-$ forge test
-```
+---
 
-### Format
+### Buy NFT
 
-```shell
-$ forge fmt
-```
+![Marketplace](./workflow-images/BuyNft.png)
 
-### Gas Snapshots
+---
 
-```shell
-$ forge snapshot
-```
+### Sell NFT
 
-### Anvil
+![Marketplace](./workflow-images/Sell.png)
 
-```shell
-$ anvil
-```
-
-### Deploy
-
-```shell
-$ forge script script/Counter.s.sol:CounterScript --rpc-url <your_rpc_url> --private-key <your_private_key>
-```
-
-### Cast
-
-```shell
-$ cast <subcommand>
-```
-
-### Help
-
-```shell
-$ forge --help
-$ anvil --help
-$ cast --help
-```
+## Thank You :)
