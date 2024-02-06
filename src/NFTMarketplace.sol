@@ -42,6 +42,7 @@ contract NFTMarketplace is ERC721URIStorage {
     error NFTMarketplace__PriceCannot_BeZero();
     error NFTMarketplace__TransferFailed();
     error NFTMarketplace__OnlyOwnerCan_ReSell();
+    error NFTMarketplace__Item_NotForSale();
 
     //////////////////////////////////////////////////////////
     ////////////////  Type Declarations  /////////////////////
@@ -114,7 +115,11 @@ contract NFTMarketplace is ERC721URIStorage {
             revert NFTMarketplace__Incorrect_BuyingPrice();
         }
 
-        s_idToMarketItem[tokenId].seller = payable(address(0));
+        if (s_idToMarketItem[tokenId].sold) {
+            revert NFTMarketplace__Item_NotForSale();
+        }
+
+        s_idToMarketItem[tokenId].seller = payable(msg.sender);
         s_idToMarketItem[tokenId].sold = true;
         s_idToMarketItem[tokenId].owner = payable(msg.sender);
 
@@ -139,8 +144,8 @@ contract NFTMarketplace is ERC721URIStorage {
     }
 
     function reSellNft(uint256 tokenId, uint256 price) external payable {
-        address owner = s_idToMarketItem[tokenId].owner;
-        if (owner != msg.sender) {
+        address seller = s_idToMarketItem[tokenId].seller;
+        if (seller != msg.sender) {
             revert NFTMarketplace__OnlyOwnerCan_ReSell();
         }
 
@@ -154,7 +159,6 @@ contract NFTMarketplace is ERC721URIStorage {
 
         s_idToMarketItem[tokenId].sold = false;
         s_idToMarketItem[tokenId].price = price;
-        s_idToMarketItem[tokenId].seller = payable(msg.sender);
         s_idToMarketItem[tokenId].owner = payable(address(this));
 
         // give nft marketplace allowance to perform actions
