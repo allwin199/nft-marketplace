@@ -4,6 +4,7 @@ pragma solidity 0.8.20;
 import {Test, console} from "forge-std/Test.sol";
 import {DeployNftMarketplace} from "../../script/DeployNftMarketplace.s.sol";
 import {NFTMarketplace} from "../../src/NFTMarketplace.sol";
+import {MocksTransferFailed} from "../mocks/MocksTransferFailed.sol";
 
 contract NftMarketplaceTest is Test {
     //////////////////////////////////////////////////////////
@@ -192,6 +193,60 @@ contract NftMarketplaceTest is Test {
         uint256 seller1CurrentBalance = address(seller1).balance;
 
         assertEq(seller1CurrentBalance, seller1PrevBalance + marketItem.price);
+    }
+
+    function test_RevertsIf_ItemAlreadySold() public TokenCreateAnd_SaleExecuted {
+        vm.startPrank(seller2);
+
+        NFTMarketplace.MarketItem memory marketItem = nftMarketplace.getItemForTokenId(0);
+        uint256 price = marketItem.price;
+
+        vm.expectRevert(NFTMarketplace.NFTMarketplace__Item_NotForSale.selector);
+        nftMarketplace.executeSale{value: price}(0);
+
+        vm.stopPrank();
+    }
+
+    function test_RevertsIf_TransferingAmountTo_SellerFailed() public {
+        MocksTransferFailed mockTransferFailed = new MocksTransferFailed();
+        vm.deal(address(mockTransferFailed), STARTING_BALANCE);
+
+        vm.startPrank(address(mockTransferFailed));
+        nftMarketplace.createToken{value: LISTING_PRICE}(TOKEN_URI_1, NFT_PRICE);
+        vm.stopPrank();
+
+        vm.startPrank(seller2);
+
+        NFTMarketplace.MarketItem memory marketItem = nftMarketplace.getItemForTokenId(0);
+        uint256 price = marketItem.price;
+
+        vm.expectRevert(NFTMarketplace.NFTMarketplace__TransferFailed.selector);
+        nftMarketplace.executeSale{value: price}(0);
+
+        vm.stopPrank();
+    }
+
+    function test_RevertsIf_TransferingAmountTo_MarketOwnerFailed() public {
+        MocksTransferFailed mockTransferFailed = new MocksTransferFailed();
+        vm.deal(address(mockTransferFailed), STARTING_BALANCE);
+
+        vm.startPrank(address(mockTransferFailed));
+        NFTMarketplace mockNftMarketPlace = new NFTMarketplace();
+        vm.stopPrank();
+
+        vm.startPrank(seller1);
+        mockNftMarketPlace.createToken{value: LISTING_PRICE}(TOKEN_URI_1, NFT_PRICE);
+        vm.stopPrank();
+
+        vm.startPrank(seller2);
+
+        NFTMarketplace.MarketItem memory marketItem = mockNftMarketPlace.getItemForTokenId(0);
+        uint256 price = marketItem.price;
+
+        vm.expectRevert(NFTMarketplace.NFTMarketplace__TransferFailed.selector);
+        mockNftMarketPlace.executeSale{value: price}(0);
+
+        vm.stopPrank();
     }
 
     //////////////////////////////////////////////////////////
