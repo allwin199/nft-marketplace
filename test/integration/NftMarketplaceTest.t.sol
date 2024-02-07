@@ -195,6 +195,23 @@ contract NftMarketplaceTest is Test {
         assertEq(seller1CurrentBalance, seller1PrevBalance + marketItem.price);
     }
 
+    function test_executeSale_UpdatesMarketplaceOwnerBalance() public TokenCreated {
+        uint256 ownerBalanceBefore = address(msg.sender).balance;
+
+        vm.startPrank(seller2);
+
+        NFTMarketplace.MarketItem memory marketItem = nftMarketplace.getItemForTokenId(0);
+        uint256 price = marketItem.price;
+
+        nftMarketplace.executeSale{value: price}(0);
+
+        vm.stopPrank();
+
+        uint256 ownerBalanceAfter = address(msg.sender).balance;
+
+        assertEq(ownerBalanceAfter, ownerBalanceBefore + LISTING_PRICE);
+    }
+
     function test_RevertsIf_ItemAlreadySold() public TokenCreateAnd_SaleExecuted {
         vm.startPrank(seller2);
 

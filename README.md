@@ -6,6 +6,10 @@ Ethereum-based NFT marketplace where users can securely sell their digital asset
 
 ## Workflow
 
+![NFTMarketplaceTree](./workflow-images/tree.png)
+
+-   [Checkout the complete workflow](./test/NftMarketplace.tree)
+
 ## Test
 
 ```sh

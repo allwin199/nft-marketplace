@@ -1,0 +1,38 @@
+NFTMarketplace
+├── Create Token
+│   ├── Reverts
+│   │   ├── If token price is 0
+│   │   └── If Incorrect listing price
+│   ├── Updates
+│   │   ├── s_idToMarketItem with a new marketItem
+│   │   └── s_tokenId with +1
+│   ├── Emits
+│   │   └── MarketItemCreated event
+│   └── Returns
+│       └── tokenId
+├── Execute Sale
+│   ├── Reverts
+│   │   ├── If price is Incorrect
+│   │   ├── If item already sold
+│   │   ├── If transferrring price amount to previous seller failed
+│   │   └── If transferring listing price to marketplace owner failed
+│   └── Updates
+│       ├── s_idToMarketItem[tokenId].owner to marketplace
+│       ├── s_idToMarketItem[tokenId].sold to true
+│       └── s_itemsSold with +1
+├── Re-Sell NFT
+│   ├── Reverts
+│   │   ├── If not called by owner of the token
+│   │   ├── If token price is 0
+│   │   └── If Incorrect listing price
+│   └── Updates
+│       ├── s_idToMarketItem[tokenId].price to new price
+│       ├── s_idToMarketItem[tokenId].owner to marketplace
+│       ├── s_idToMarketItem[tokenId].sold to false
+│       └── s_itemsSold with -1
+└── Update Listing price
+    ├── Reverts
+    │   ├── If not called by owner of the marketplace
+    │   └── If new listing price is 0
+    └── Updates
+        └── s_listingPrice with new price
