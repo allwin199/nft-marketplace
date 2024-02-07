@@ -1,0 +1,13 @@
+NFTMarketplace
+# Create Token
+## Reverts
+### If token price is 0
+### If Incorrect listing price
+## Updates
+### s_idToMarketItem with a new marketItem
+### s_tokenId with +1
+## Emits
+### MarketItemCreated event
+## Returns
+### tokenId
+
